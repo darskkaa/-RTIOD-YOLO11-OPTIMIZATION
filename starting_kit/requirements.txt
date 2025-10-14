@@ -6,3 +6,5 @@ pycocotools
 scikit-learn
 scipy
 tqdm
+wandb
+seaborn

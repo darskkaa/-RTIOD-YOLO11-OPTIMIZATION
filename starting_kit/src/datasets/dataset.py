@@ -34,7 +34,7 @@ class COCODataset(Dataset):
         imgID = self.ids[idx]
         imgInfo = self.coco.imgs[imgID]        
         imgPath = os.path.join(self.root, imgInfo['file_name'])
-        image = Image.open(imgPath)
+        image = Image.open(imgPath).convert('RGB')
 
         annotations = self.loadAnnotations(imgID, imgInfo['width'], imgInfo['height'])
         metadata = self.loadMetadata(imgID)
@@ -111,11 +111,38 @@ class YOLODataset(Dataset):
 
         return image, target_tensor, target
 
-
 # MARK: - collate functions for dataloaders
 def collate_fn_coco(batch: List[Tuple[Tensor, Tensor, dict]]) -> Tuple[Tensor, Tensor, Tuple[Dict[str, Tensor]]]:
     batch = tuple(zip(*batch))
     return torch.stack(batch[0]), torch.stack(batch[1]), batch[2]
+
+def _process_target_dict(target: dict) -> Dict[str, Tensor]:
+    """Convert target dictionary values to appropriate tensor types."""
+    tensor_target = {}
+    for k, v in target.items():
+        if isinstance(v, np.ndarray):
+            if k == 'labels':
+                tensor_target[k] = torch.from_numpy(v).long()
+            elif k == 'masks':
+                tensor_target[k] = torch.from_numpy(v).bool()
+            else:
+                tensor_target[k] = torch.from_numpy(v).float()
+        elif isinstance(v, Tensor):
+            if k == 'labels':
+                tensor_target[k] = v.long()
+            elif k == 'masks':
+                tensor_target[k] = v.bool()
+            else:
+                tensor_target[k] = v.float()
+        else:
+            if k == 'labels':
+                tensor_target[k] = torch.tensor(v, dtype=torch.long)
+            elif k == 'masks':
+                tensor_target[k] = torch.tensor(v, dtype=torch.bool)
+            else:
+                tensor_target[k] = torch.tensor(v, dtype=torch.float32)
+    return tensor_target
+
 
 def collate_fn_yolo(batch: List[Tuple[Tensor, Tensor, dict]]) -> Tuple[Tensor, Tensor, List[Dict[str, Tensor]]]:
     images, targets, original_targets = zip(*batch)
@@ -123,8 +150,33 @@ def collate_fn_yolo(batch: List[Tuple[Tensor, Tensor, dict]]) -> Tuple[Tensor, T
     original_targets_list = [_process_target_dict(target) for target in original_targets]
     return images_tensor, targets, original_targets_list
 
+
+def load_datasets(args):
+    num_classes = args.numClass
+    data_folder = args.dataDir
+    train_file = args.trainAnnFile
+    val_file = args.valAnnFile
+    test_file = args.testAnnFile
+
+    data_folder = os.path.join(args.currentDir, data_folder)
+    train_file = os.path.join(args.currentDir, train_file)
+    val_file = os.path.join(args.currentDir, val_file)
+    test_file = os.path.join(args.currentDir, test_file)
+
+    train_dataset = COCODataset(data_folder, train_file, num_classes, args.scaleMetadata)
+    val_dataset = COCODataset(data_folder, val_file, num_classes, args.scaleMetadata)
+    test_dataset = COCODataset(data_folder, test_file, num_classes, args.scaleMetadata)
+    collate_fn = collate_fn_coco
+    if args.model == 'yolo':
+        train_dataset = YOLODataset(train_dataset)
+        val_dataset = YOLODataset(val_dataset)
+        test_dataset = YOLODataset(test_dataset)
+        collate_fn = collate_fn_yolo
+
+    return train_dataset, val_dataset, test_dataset, collate_fn
+
 # TEST MAIN
-@hydra.main(config_path='../../config', config_name='config')
+@hydra.main(config_path='../../config', config_name='config', version_base="1.3")
 def main(args):
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
