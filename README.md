@@ -17,3 +17,12 @@ Challenge dataset: **LTDv2** [paper](https://www.techrxiv.org/doi/full/10.36227/
 A starting kit to run some baseline experiments with YOLO is available [here](doc/starting_kit/), but feel free to reimplement from scratch all the code ;) 
 
 Associated workshop at WACV2026: [Real-World Surveillance: Applications and Challenges Workshop, 6th](https://vap.aau.dk/rws/)
+
+## Important dates
+- October 17th:  Start of competition and Development Phase
+- December 1st: Start of Testing Phase and end of Development Phase
+- December 7th: End of competition
+- December 7th: Paper submission deadline
+- December 14th: Paper submission deadline (Challenge Participants)
+- December 23rd: Decision notification
+- January 9th 11:59 PM, PT: Camera-ready deadline
