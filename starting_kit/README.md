@@ -30,11 +30,17 @@ python -m pip install torch torchvision
 python -m pip install -r requirements.txt
 ```
 
-## Get the LTDv2 dataset from HuggingFace
+## Get the LTDv2 dataset and set up it
 
-- download the frames and the annotations
-- unzip the frames
-- convert the the dataset from coco to yolo format
+Download the frames and annotations from the official HuggingFace dataset repository. Unzip the image frames and convert the original COCO json annotation to YOLO format.
+
+```sh
+python -m scripts.download_LTDv2
+unzip data/frames.zip -d data/
+python -m scripts.coco_to_yolo
+```
+
+
 
 ## Usage
 

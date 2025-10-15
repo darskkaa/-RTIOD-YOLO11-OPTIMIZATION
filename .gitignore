@@ -386,3 +386,5 @@ checkpoint/
 data/
 wandb/
 outputs/
+*.bak
+*.pt
