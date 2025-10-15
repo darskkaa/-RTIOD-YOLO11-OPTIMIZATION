@@ -14,7 +14,7 @@ The objectives, rules, and challenge submission are handled on the Codabench cha
 
 Challenge dataset: **LTDv2** [paper](https://www.techrxiv.org/doi/full/10.36227/techrxiv.175339329.95323969) [dataset](https://huggingface.co/datasets/vapaau/LTDv2)
 
-A starting kit to run some baseline experiments with YOLO is available [here](doc/starting_kit/), but feel free to reimplement from scratch all the code ;) 
+A starting kit to run some baseline experiments with YOLO is available [here](doc/starting_kit/), but feel free to reimplement from scratch all the code ;) In that case, we also release the [torch dataset](./starting_kit/src/datasets/dataset.py) to manage the dataset in the original COCO format along with some [configuration](./starting_kit/config/config.yaml), and [utility functions](./starting_kit/src/utils/).
 
 Associated workshop at WACV2026: [Real-World Surveillance: Applications and Challenges Workshop, 6th](https://vap.aau.dk/rws/)
 
