@@ -42,6 +42,8 @@ python -m scripts.coco_to_yolo
 
 
 
-## Usage
+## Run experiments YOLOv8 baseline
 
-- how to run basic training
+```sh
+python train.py
+```
