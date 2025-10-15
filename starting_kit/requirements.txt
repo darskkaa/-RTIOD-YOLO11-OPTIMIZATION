@@ -8,3 +8,5 @@ scipy
 tqdm
 wandb
 seaborn
+huggingface_hub
+ultralytics
