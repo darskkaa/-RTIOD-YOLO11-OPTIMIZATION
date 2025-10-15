@@ -388,3 +388,4 @@ wandb/
 outputs/
 *.bak
 *.pt
+runs/
