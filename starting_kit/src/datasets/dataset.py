@@ -49,6 +49,11 @@ class COCODataset(Dataset):
         image, targets = self.transforms(image, targets)
         return image, targets
 
+    def get_img_path(self, idx: int) -> str:
+        imgID = self.ids[idx]
+        imgInfo = self.coco.imgs[imgID]        
+        imgPath = os.path.join(self.root, imgInfo['file_name'])
+        return imgPath
 
     def loadAnnotations(self, imgID: int, imgWidth: int, imgHeight: int) -> np.ndarray:
         ans = []
@@ -95,13 +100,24 @@ def main(args):
 
     num_classes = 4
     data_folder = 'data'
-    data_file = 'data/Test.json'
+    data_file = 'data/TestNoLabels.json'
     data_folder = os.path.join(args.currentDir, data_folder)
     data_file = os.path.join(args.currentDir, data_file)
     dataset = COCODataset(data_folder, data_file, num_classes)
     dataloader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=collate_fn_coco)
     print(dataset.__len__())
 
+
+    for i in range(5):
+        img, target = dataset.__getitem__(i)
+        
+        img = img.permute(1, 2, 0).numpy()
+        fig, ax = plt.subplots(1)
+        ax.imshow(img)
+        plt.show()
+    
+
+    '''
     for images, targets in dataloader:
         for i in range(len(images)):
             img = images[i].permute(1, 2, 0).numpy()
@@ -124,6 +140,6 @@ def main(args):
 
             plt.show()
         break
-        
+    '''  
 if __name__ == '__main__':
     main()

@@ -20,7 +20,7 @@ patience: 10
 dataDir: ${hydra:runtime.cwd}/data/
 trainAnnFile: ${hydra:runtime.cwd}/data/Train.json
 valAnnFile: ${hydra:runtime.cwd}/data/Valid.json
-testAnnFile: ${hydra:runtime.cwd}/data/Test.json
+testAnnFile: ${hydra:runtime.cwd}/data/TestNoLabels.json
 transform: True
 
 # MARK: - miscellaneous
