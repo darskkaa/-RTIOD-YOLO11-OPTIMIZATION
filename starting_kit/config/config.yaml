@@ -1,0 +1,27 @@
+
+hydra:
+  run:
+    dir: ${hydra:runtime.cwd}/outputs
+
+seed: 42
+numClass: 4
+currentDir: ${hydra:runtime.cwd}
+
+imgSize: 224 
+
+
+# MARK: - training config
+lr: 5e-5
+batchSize: 16
+epochs: 100
+patience: 10
+
+# MARK: - dataset
+dataDir: ${hydra:runtime.cwd}/data/
+trainAnnFile: ${hydra:runtime.cwd}/data/Train.json
+valAnnFile: ${hydra:runtime.cwd}/data/Valid.json
+testAnnFile: ${hydra:runtime.cwd}/data/Test.json
+transform: True
+
+# MARK: - miscellaneous
+outputDir: ${hydra:runtime.cwd}/checkpoint
