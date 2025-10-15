@@ -10,7 +10,7 @@
 
 [RWS@WACV2026](https://vap.aau.dk/rws/) introduces a new challenge on Robust Thermal-Image Object Detection using the LTDv2 dataset, benchmarking multi-object detection under long-term thermal drift. Real-world conditions like ambient changes, sensor aging, and weather dynamics cause performance degradation, especially in thermal imagery, which relies on shape cues and temperature differentials.
 
-The challenge will be run on Codabench. Rules and objectives on the Codabench challenge [official page]().
+The challenge will be run on Codabench. Rules and objectives on the Codabench challenge [official page](https://www.codabench.org/competitions/10954/).
 
 Challenge dataset: **LTDv2** [paper](https://www.techrxiv.org/doi/full/10.36227/techrxiv.175339329.95323969) [dataset](https://huggingface.co/datasets/vapaau/LTDv2)
 
