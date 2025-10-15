@@ -1,11 +1,8 @@
 from huggingface_hub import hf_hub_download
-import hydra
 import os
 
-@hydra.main(config_path='../config', config_name='config', version_base="1.3")
 def download_LTDv2(cfg):
     # download the LTDv2 dataset annotations from huggingface
-    #hf_hub_download(repo_id="vapaau/LTDv2", filename="data/Train.json", local_dir="config")
     hf_hub_download(repo_id="vapaau/LTDv2", repo_type="dataset", filename="data/Valid.json")
     hf_hub_download(repo_id="vapaau/LTDv2", repo_type="dataset", filename="data/Train.json")
     hf_hub_download(repo_id="vapaau/LTDv2", repo_type="dataset", filename="data/frames.zip")
