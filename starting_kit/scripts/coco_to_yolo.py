@@ -10,12 +10,11 @@ import hydra
 
 
 class COCODataset():
-    def __init__(self, root: str, annotation: str, numClass: int, scaling_thresholds: Dict[str, Tuple[float, float]] = None):
+    def __init__(self, root: str, annotation: str, numClass: int):
         self.root = root
         self.coco = COCO(annotation)
         self.ids = list(self.coco.imgs.keys())
         self.numClass = numClass
-        self.scaling_thresholds = scaling_thresholds
         self.transforms = T.Compose([T.ToTensor()])
         self.newIndex = {}
         classes = []
@@ -60,8 +59,8 @@ def load_datasets(args):
     train_file = os.path.join(args.currentDir, train_file)
     val_file = os.path.join(args.currentDir, val_file)
 
-    train_dataset = COCODataset(data_folder, train_file, num_classes, args.scaleMetadata)
-    val_dataset = COCODataset(data_folder, val_file, num_classes, args.scaleMetadata)
+    train_dataset = COCODataset(data_folder, train_file, num_classes)
+    val_dataset = COCODataset(data_folder, val_file, num_classes)
     return train_dataset, val_dataset
 
 
