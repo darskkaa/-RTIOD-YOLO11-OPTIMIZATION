@@ -7,6 +7,13 @@ seed: 42
 numClass: 4
 currentDir: ${hydra:runtime.cwd}
 
+modelCheckpoint: checkpoints/best.pt
+
+submission:
+  type: 'val' # 'val' or 'test'
+  valTemplate: ${hydra:runtime.cwd}/submission_template_development.json
+  testTemplate: ${hydra:runtime.cwd}/submission_template_testing.json
+
 imgSize: 224 
 
 

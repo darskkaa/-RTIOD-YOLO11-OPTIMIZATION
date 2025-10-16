@@ -42,8 +42,25 @@ python -m scripts.coco_to_yolo
 
 
 
-## Run experiments YOLOv8 baseline
+## Usage
 
+
+You can use this repository to **train**, **evaluate**, and **generate submissions** for your models, following the provided templates for both validation and test phases.
+
+To **train a YOLOv8 baseline model**, run:
 ```sh
 python train.py
+```
+
+To **evaluate performance** on the validation set using the baseline model included in this repository, run:
+```sh
+python test.py
+```
+
+Finally, to prepare submission files for either [validation](./submission_template_development.json) or [test](./submission_template_testing.json), use the commands below.
+The generated files will be stored in a folder named `sumission/`:
+
+```sh
+python detect.py submission.type=val
+python detect.py submission.type=test
 ```
