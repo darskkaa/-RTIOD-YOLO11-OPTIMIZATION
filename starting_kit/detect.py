@@ -32,7 +32,7 @@ def main(args):
         results = model.predict(source=image, imgsz=160, conf=0.25)
         #print(results)
         result = results[0]
-        boxes = result.boxes.xywh
+        boxes = result.boxes.xyxy
         conf = result.boxes.conf
         labels = result.boxes.cls
         # convert labels to int and sum 1 to match the original labels
