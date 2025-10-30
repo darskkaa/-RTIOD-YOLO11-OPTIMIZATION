@@ -9,4 +9,8 @@ tqdm
 wandb
 seaborn
 huggingface_hub
-ultralytics
+
+# YOLO11 requirements (RTX 5090 optimized)
+torch>=2.0.0  # Required for YOLO11 and AMP on 5090
+torchvision>=0.15.0  # Required for YOLO11
+ultralytics>=8.3.0  # Latest version with YOLO11 support

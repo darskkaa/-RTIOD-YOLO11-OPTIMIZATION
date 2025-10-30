@@ -10,7 +10,15 @@ import json
 
 @hydra.main(config_path='config', config_name='config', version_base="1.3")   
 def main(args):
-
+    """
+    Generate predictions for RTIOD challenge submission.
+    Uses trained YOLO11x model at 640px resolution.
+    """
+    
+    # Detect GPU for faster inference
+    device = 0 if torch.cuda.is_available() else 'cpu'
+    print(f"\n🔍 Running predictions on: {device}")
+    
     model = YOLO(args.modelCheckpoint)
     train, val, test, collate_fn = load_datasets(args)
 
@@ -29,7 +37,7 @@ def main(args):
         print(f'\n\nProcessing image {i+1}/{len(dataset)}')
         imgPath = dataset.get_img_path(i)
         image = imgPath
-        results = model.predict(source=image, imgsz=160, conf=0.25)
+        results = model.predict(source=image, imgsz=args.imgSize, conf=0.25, device=device)
         #print(results)
         result = results[0]
         boxes = result.boxes.xyxy

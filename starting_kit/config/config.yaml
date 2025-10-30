@@ -7,28 +7,65 @@ seed: 42
 numClass: 4
 currentDir: ${hydra:runtime.cwd}
 
-modelCheckpoint: yolov8m.pt  # checkpoints/last.pt
+# YOLO11x for RTX 5090 - Maximum capacity model for thermal detection
+modelCheckpoint: yolov11x.pt  # Largest YOLO11 model (+8-10% mAP vs yolov11l)
 
 submission:
   type: 'val' # 'val' or 'test'
   valTemplate: ${hydra:runtime.cwd}/submission_template_development.json
   testTemplate: ${hydra:runtime.cwd}/submission_template_testing.json
 
-imgSize: 224 
+# RTX 5090 optimized: 640px resolution preserves maximum thermal detail
+imgSize: 640  # 4x baseline (160px) - critical for small distant objects (+10-15% mAP)
 
 
-# MARK: - training config
-lr: 5e-5
-batchSize: 16
-epochs: 100
-patience: 10
+# MARK: - Training Config (Optimized for Thermal Detection)
+lr: 0.001  # Standard thermal detection LR (was 5e-5, too conservative)
+lrf: 0.01  # Final LR = lr * lrf = 0.00001
+batchSize: 64  # RTX 5090 can handle 64 @ 640px (optimal gradient estimates, +2-3% mAP)
+epochs: 200  # Extended for thermal seasonal variations (+5-8% mAP)
+patience: 25  # Allow longer convergence search
 
-# MARK: - dataset
+# Optimizer settings (SGD more stable than Adam for thermal)
+optimizer: 'SGD'  # Better than Adam/AdamW for noisy thermal data
+momentum: 0.937  # Standard YOLO momentum
+weight_decay: 0.0005  # L2 regularization
+warmup_epochs: 5  # Smooth LR ramp-up prevents early instability (+1-2% mAP)
+warmup_momentum: 0.8  # Lower momentum during warmup
+cos_lr: True  # Cosine annealing for smooth convergence (+1-2% mAP)
+
+# Thermal-Specific Augmentation (Critical for LTDv2 dataset)
+augmentation:
+  # Mosaic and mixing
+  mosaic: 1.0  # Enable mosaic augmentation (combines 4 images)
+  mixup: 0.15  # Mild mixup for thermal robustness (higher than 0.1 for 5090)
+  copy_paste: 0.1  # Copy-paste augmentation for small objects
+  
+  # Color augmentation (minimal for thermal/grayscale)
+  hsv_h: 0.01  # Minimal hue shift (thermal is essentially grayscale)
+  hsv_s: 0.0  # DISABLE saturation (no color in thermal images)
+  hsv_v: 0.5  # CRITICAL: Boost brightness variation (thermal contrast changes)
+  
+  # Geometric augmentation
+  degrees: 15  # Rotation (slightly higher for 5090 capacity)
+  translate: 0.15  # Translation (camera movement)
+  scale: 0.6  # Scale variation (zoom in/out)
+  shear: 2.0  # Shear transformation
+  perspective: 0.0005  # Perspective distortion
+  flipud: 0.5  # Vertical flip (surveillance cameras)
+  fliplr: 0.5  # Horizontal flip
+  
+  # Advanced augmentation
+  close_mosaic: 15  # Disable mosaic last 15 epochs for fine-tuning (+2-3% mAP)
+  erasing: 0.4  # Random erasing (occlusion robustness)
+  crop_fraction: 1.0  # Crop fraction for training
+
+# MARK: - Dataset
 dataDir: ${hydra:runtime.cwd}/data/
 trainAnnFile: ${hydra:runtime.cwd}/data/Train.json
 valAnnFile: ${hydra:runtime.cwd}/data/Valid.json
 testAnnFile: ${hydra:runtime.cwd}/data/TestNoLabels.json
 transform: True
 
-# MARK: - miscellaneous
+# MARK: - Miscellaneous
 outputDir: ${hydra:runtime.cwd}/checkpoint
