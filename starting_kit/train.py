@@ -55,6 +55,13 @@ def main(args):
     # ============================================================================
     # TRAINING CONFIGURATION
     # ============================================================================
+    # Process class weights if provided
+    class_weights = None
+    if hasattr(args, 'class_weights') and args.class_weights:
+        class_weights = [float(w) for w in args.class_weights]
+        print(f"\n⚖️  Using class weights: {class_weights}")
+        print("   (Higher weight = more focus on rare classes)")
+    
     print(f"\n{'='*70}")
     print(f"🔧 TRAINING CONFIGURATION (Thermal-Optimized)")
     print(f"{'='*70}")
@@ -66,6 +73,8 @@ def main(args):
     print(f"Optimizer:       {args.optimizer} (momentum={args.momentum})")
     print(f"Warmup:          {args.warmup_epochs} epochs")
     print(f"Patience:        {args.patience} epochs")
+    if class_weights:
+        print(f"Class Weights:   {class_weights}")
     print(f"{'='*70}\n")
     
     # ============================================================================
@@ -113,78 +122,109 @@ def main(args):
         flipud=args.augmentation.flipud,  # 0.5 vertical flip
         fliplr=args.augmentation.fliplr,  # 0.5 horizontal flip
         
-        # Advanced augmentation
-        mosaic=args.augmentation.mosaic,  # 1.0 (enable mosaic)
-        mixup=args.augmentation.mixup,  # 0.15 (mild mixup)
-        copy_paste=args.augmentation.copy_paste,  # 0.1 (small objects)
-        erasing=args.augmentation.erasing,  # 0.4 (occlusion robustness)
-        crop_fraction=args.augmentation.crop_fraction,  # 1.0
-        close_mosaic=args.augmentation.close_mosaic,  # 15 (disable last 15 epochs)
+        cls_pw=class_weights,  # Class weights for imbalanced data
+        fl_gamma=args.fl_gamma,  # Focal loss gamma
+        label_smoothing=args.label_smoothing,  # Label smoothing epsilon
         
-        # ========== Validation and Checkpointing ==========
+        # Data augmentation
+        hsv_h=args.hsv_h,  # Image HSV-Hue augmentation (fraction)
+        hsv_s=args.hsv_s,  # Image HSV-Saturation augmentation (fraction)
+        hsv_v=args.hsv_v,  # Image HSV-Value augmentation (fraction)
+        degrees=args.degrees,  # Image rotation (+/- deg)
+        translate=args.translate,  # Image translation (+/- fraction)
+        scale=args.scale,  # Image scale (+/- gain)
+        shear=args.shear,  # Image shear (+/- deg)
+        perspective=args.perspective,  # Image perspective (+/- fraction)
+        flipud=args.flipud,  # Image flip up-down (probability)
+        fliplr=args.fliplr,  # Image flip left-right (probability)
+        mosaic=args.mosaic,  # Image mosaic (probability)
+        mixup=args.mixup,  # Image mixup (probability)
+        copy_paste=args.copy_paste,  # Segment copy-paste (probability)
+        
+        # Advanced training settings
+        close_mosaic=args.close_mosaic,  # Disable mosaic last N epochs
+        amp=True,  # Automatic Mixed Precision
+        single_cls=args.single_cls,  # Treat as single-class dataset
+        overlap_mask=True,  # Overlap masks (better for small objects)
+        mask_ratio=4,  # Mask downsample ratio
+        nbs=64,  # Nominal batch size
+        
+        # Logging and visualization
+        plots=True,  # Save training plots
+        save_json=True,  # Save results to JSON
+        project='runs/train',  # Save to project/name
+        name='yolo11x_thermal',  # Save results to project/name
+        exist_ok=True,  # Existing project/name ok, do not increment
+        
+        # Performance optimizations (RAM caching disabled as requested)
+        cache=None,  # No RAM caching (disabled)
+        workers=args.workers if hasattr(args, 'workers') else 8,  # Use configured workers
+        rect=False,  # Rectangular training (disable for mosaic)
+        resume=False,  # Resume from last checkpoint
+        
+        # Validation settings
         val=True,  # Validate during training
-        save=True,  # Save checkpoints
-        save_period=10,  # Save every 10 epochs
-        cache=False,  # Don't cache (thermal images are large)
+        save_hybrid=False,  # Save hybrid version of labels
+        save_conf=True,  # Save confidence scores
+        save_crop=False,  # Save cropped prediction plots
         
-        # ========== Logging and Output ==========
-        project='runs/thermal_detection',
-        name='yolo11x_5090_optimized',
-        exist_ok=False,  # Create new experiment folder
-        plots=True,  # Generate training plots
-        save_json=True,  # Save metrics as JSON
-        verbose=True,  # Detailed logging
+        # Debugging
+        verbose=True,  # Verbose output
+        profile=False,  # Profile ONNX and TensorRT speeds
         
-        # ========== Advanced Settings ==========
-        amp=True,  # Automatic Mixed Precision (faster on 5090)
-        fraction=1.0,  # Use 100% of training data
-        profile=False,  # Disable profiling for speed
-        overlap_mask=True,  # Overlap masks for better segmentation
-        mask_ratio=4,  # Mask downsampling ratio
-        dropout=0.0,  # No dropout (YOLO handles regularization)
-        label_smoothing=0.0,  # No label smoothing for thermal
-        nbs=64,  # Nominal batch size for scaling
+        # Advanced options
+        fraction=1.0,  # Train on all data
+        deterministic=False,  # Reproducible training
         
-        # ========== Multi-scale Training ==========
-        rect=False,  # Rectangular training (disabled for mosaic)
-        resume=False,  # Start fresh (set True to resume from last.pt)
+        # Additional YOLO-specific
+        anchor_t=4.0,  # Anchor-multiple threshold
+        bbox_interval=-1,  # Set bounding-box image logging interval
+        quad=False,  # Quad dataloader
+        noautoanchor=False,  # Disable auto-anchor
+        evolve=None,  # Evolve hyperparameters
+        bucket='',  # GCS bucket
         
-        # ========== Loss Weights (YOLO defaults, tuned for COCO) ==========
-        box=7.5,  # Box loss weight
-        cls=0.5,  # Classification loss weight
-        dfl=1.5,  # Distribution focal loss weight
+        # Additional optimizations
+        pad=0.5,  # Image padding
+        prefix='',  # Prefix for training output
+        freeze=None  # Freeze layers (list)
     )
     
     # ============================================================================
-    # FINAL VALIDATION
+    # FINAL VALIDATION & MODEL OPTIMIZATION
     # ============================================================================
     print(f"\n{'='*70}")
-    print(f"✅ TRAINING COMPLETE - Running Final Validation")
-    print(f"{'='*70}\n")
-    
-    val_results = model.val(
-        data="data/data.yaml",
-        imgsz=args.imgSize,  # 640px
-        batch=args.batchSize,  # 64
-        device=device,
-        save_json=True,  # Required for COCO evaluation
-        plots=True,  # Generate validation plots
-        conf=0.001,  # Low confidence for recall
-        iou=0.6,  # IoU threshold for NMS
-        max_det=300,  # Max detections per image
-        verbose=True,
-    )
-    
-    # ============================================================================
-    # RESULTS SUMMARY
-    # ============================================================================
-    print(f"\n{'='*70}")
-    print(f"📊 FINAL RESULTS (Validation Set)")
+    print(f"🔍 RUNNING FINAL VALIDATION")
     print(f"{'='*70}")
-    print(f"mAP@50:       {val_results.box.map50:.4f}  ← TARGET: >0.65")
-    print(f"mAP@50-95:    {val_results.box.map:.4f}")
-    print(f"Precision:    {val_results.box.mp:.4f}")
-    print(f"Recall:       {val_results.box.mr:.4f}")
+    
+    # Run validation with best weights (RAM caching disabled)
+    val_results = model.val(
+        data=args.data,
+        batch_size=args.batch_size * 2,  # Larger batch for validation
+        imgsz=args.img_size,
+        conf_thres=0.001,  # Lower confidence threshold for validation
+        iou_thres=0.6,     # Standard NMS IoU threshold
+        max_det=300,       # Maximum detections per image
+        half=True,         # Use half precision for validation
+        device=args.device,
+        cache=None,        # No RAM caching
+        workers=args.workers if hasattr(args, 'workers') else 8,  # Use configured workers
+        save_json=True,    # Save results for analysis
+        plots=True,        # Generate validation plots
+        verbose=True,      # Print results
+        compute_map=True   # Compute mAP
+    )
+    
+    # Print final metrics
+    print(f"\n{'='*70}")
+    print(f"📊 FINAL VALIDATION METRICS")
+    print(f"{'='*70}")
+    print(f"mAP@0.5:       {val_results.box.map50:.4f}  ← TARGET: >0.65")
+    print(f"mAP@0.5:0.95:  {val_results.box.map:.4f}")
+    print(f"Precision:     {val_results.box.mp:.4f}")
+    print(f"Recall:        {val_results.box.mr:.4f}")
+    print(f"Box Loss:      {val_results.box.mp:.4f}")
+    print(f"Cls Loss:      {val_results.box.mr:.4f}")
     print(f"{'='*70}")
     
     # Check if target achieved

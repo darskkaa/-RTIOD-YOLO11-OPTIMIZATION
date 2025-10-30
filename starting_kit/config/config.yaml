@@ -20,11 +20,26 @@ imgSize: 640  # 4x baseline (160px) - critical for small distant objects (+10-15
 
 
 # MARK: - Training Config (Optimized for Thermal Detection)
-lr: 0.001  # Standard thermal detection LR (was 5e-5, too conservative)
-lrf: 0.01  # Final LR = lr * lrf = 0.00001
-batchSize: 64  # RTX 5090 can handle 64 @ 640px (optimal gradient estimates, +2-3% mAP)
-epochs: 200  # Extended for thermal seasonal variations (+5-8% mAP)
-patience: 25  # Allow longer convergence search
+batch_size: 64
+img_size: 640
+epochs: 200  # Increased for better convergence
+cache: null  # Explicitly disable RAM caching
+
+# Performance settings (optimized for disk-based training)
+workers: 8  # Number of data loading workers
+persistent_workers: True  # Keep workers alive between epochs
+
+# Learning rate
+lr0: 0.01
+lrf: 0.1  # Final lr = lr0 * lrf
+warmup_epochs: 3
+warmup_momentum: 0.8
+warmup_bias_lr: 0.1
+# - Motorcycle (0.47% of data) gets highest weight (14.5x)
+# - Bicycle (4.27%) gets 1.62x
+# - Vehicle (10.21%) gets 0.68x
+# - Person (85.06%) gets lowest weight (0.08x)
+# Based on Effective Number formula for imbalanced datasets
 
 # Optimizer settings (SGD more stable than Adam for thermal)
 optimizer: 'SGD'  # Better than Adam/AdamW for noisy thermal data
